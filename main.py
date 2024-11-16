@@ -3,7 +3,7 @@ import os
 from flask import Flask, send_file, request
 import datetime
 from typing import List
-from . import html as htmls
+import htmls
 
 # App
 app = Flask(__name__)
