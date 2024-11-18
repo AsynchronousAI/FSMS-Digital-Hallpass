@@ -32,8 +32,14 @@ js = """async function streamToString(stream) {
                     body: JSON.stringify(data)
                 });
 
-                console.log(await streamToString(response.body))
-                location.reload()
+                const error = await streamToString(response.body)
+                if (error !== "success") {
+                    document.getElementById('sumbit').setCustomValidity(error);
+                    document.getElementById('sumbit').reportValidity();
+                    console.error(error);
+                } else {
+                    location.reload();
+                }
             });
             document.getElementById('return').addEventListener('click', async function(event) {
                 const response = await fetch(window.location.href, {
@@ -43,61 +49,104 @@ js = """async function streamToString(stream) {
                     },
                 });
 
-                console.log(await streamToString(response.body))
-                location.reload()
+                const error = await streamToString(response.body)
+                if (error !== "success") {
+                    document.getElementById('return').setCustomValidity(error);
+                    document.getElementById('return').reportValidity();
+                    console.error(error);
+                } else {
+                    location.reload();
+                }
             });"""
-mainPage = """<html data-theme="light"><head><title>Digital hall pass</title><link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css"
-        >
-    </head>
-    <body>
-        <nav>
+searchJs = """document.getElementById('search').addEventListener('input', function(event) {
+                const search = event.target.value.toLowerCase();
+                const articles = document.querySelectorAll('article');
+                articles.forEach(article => {
+                    const teacher = article.querySelector('strong').innerText.toLowerCase();
+                    if (teacher.includes(search)) {
+                        article.style.display = 'block';
+                    } else {
+                        article.style.display = 'none';
+                    }
+                });
+            });"""
+nav = """
+        <nav style="margin-left: 20px;">
             <ul>
-                <li><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbspFSMS Digital Hallpass</strong></li>
+                <li><strong>FSMS Digital Hallpass</strong></li>
+                <li>
+                   <input id="search" type="search" placeholder="Search"/>
+                </li>
             </ul>
         </nav>
-        <hr/>
-        <br/>
-        <div className="body">
-        {cards}
-        </div>
-        <footer><center>
-            <hr/>
-            Teacher: <b>Mr. Miller</b>!<br/>
-            Primarily made by: <b>Aarav Sethi</b><br/>
-            Help given by: Bertulan, Nam Hoang, Joseph McKeon
-        </center></footer>
-    </body>
-</html>"""
-card = "<article><strong>{teacher}</strong>'s Class<br/><br/><a href=\"{url}\">Here</a></article>"
-html = """<html data-theme="light"><head><title>Digital hall pass</title><link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css"
-        >
-    </head>
-    <body>
-        <nav>
+"""
+currentClassNav = """
+        <nav style="margin-left: 20px;">
             <ul>
-                <li><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbspFSMS Digital Hallpass</strong></li>
-            
+                <li><strong><a href="/">FSMS Digital Hallpass</a></strong></li>
                 <li>Class: {current_class}</li>
             </ul>
         </nav>
+"""
+head = """<title>Digital Hall Pass</title><link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css"
+        /><style>
+.error {{
+    border: 1px solid red;
+}}       
+        </style>"""
+footer = """<footer><center>
+            <hr/>
+            <b>Teacher:</b> Mr. Miller!<br/>
+            <b>Made by:</b> Aarav Sethi<br/>
+            <b>Help given by:</b> Bertulan, Nam Hoang, Joseph McKeon
+        </center></footer>"""
+mainPage = (
+    """<html data-theme="light"><head>"""
+    + head
+    + """
+    </head>
+    <body>"""
+    + nav
+    + """
+        <hr/>
+        <br/>
+        <div style="margin-left: 20px; margin-right: 20px;">
+        {cards}
+        </div>
+        """
+    + footer
+    + """
+    </body><script>
+            {searchJs}
+        </script>
+</html>"""
+)
+card = '<article><strong>{teacher}</strong>\'s Class<br/><br/><a href="{url}">Here</a></article>'
+html = (
+    """<html data-theme="light"><head>"""
+    + head
+    + """</head>
+    <body>"""
+    + currentClassNav
+    + """
         <hr/>
         <div style= "padding: 20px; text-align: center;">
             <div style="display: flex; justify-content: center; align-items: center;">
-                <div className="body leaveForm" style="border: 1px solid #C9C9C9; border-radius: 10px; padding: 20px; margin-right: 20px; border-radius: 10px; width: 300px;">
-                    <h3>New entry</h3>
-                    <input required id="name" {disabled} placeholder="Your Name"/>
-                    <input required id="reason" {disabled} placeholder="Reasoning"/>
-                    <button data-tooltip="Click this to add an entry" data-placement="bottom" id="sumbit" {disabled}>Leave</button>
-                </div>
+                <article id="new" style="border: 1px solid #C9C9C9; border-radius: 10px; padding: 20px; margin-right: 20px; border-radius: 10px; width: 800px;">
+                    <h4>New Entry</h4>
+                    <fieldset role="group">
+                        <input required id="name" {disabled} placeholder="First & Last Name"/>
+                        <input required id="reason" {disabled} placeholder="Reasoning"/>
+                        <button data-tooltip="Click this to add an entry" data-placement="bottom" id="sumbit" {disabled}>Leave</button>
+                    </fieldset>
+                </article>
                 <br/>
-                <div style="border: 1px solid #C9C9C9; border-radius: 10px; padding: 20px; border-radius: 10px; width: 300px;">
-                    <h3>{currentlyOut} is currently out</h3>
+                <article id="return" style="border: 1px solid #C9C9C9; border-radius: 10px; padding: 20px; border-radius: 10px; width: 300px;">
+                    <h4><b>{currentlyOut}</b> is currently out</h4>
                     <button id="return" data-tooltip="Click this when you return." data-placement="bottom" {notDisabled}>Return</button>
-                </div>
+                </article>
             </div>
             <br/>
             <hr/>
@@ -112,12 +161,10 @@ html = """<html data-theme="light"><head><title>Digital hall pass</title><link
                 </tr>
 {table}
     </table></div>
-        <footer><center>
-            <hr/>
-            Teacher: <b>Mr. Miller</b>!<br/>
-            Primarily made by: <b>Aarav Sethi</b><br/>
-            Help given by: Bertulan, Nam Hoang, Joseph McKeon
-        </center></footer></body>
+        """
+    + footer
+    + """</body>
         <script>
             {js}
         </script></html>"""
+)
