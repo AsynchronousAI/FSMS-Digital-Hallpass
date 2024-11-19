@@ -136,7 +136,7 @@ def index(current_class):
 
 
 def main():
-    app.run(port=int(os.environ.get("PORT", 80)), debug=True)
+    app.run(port=int(os.environ.get("PORT", 80)))
 
 
 if __name__ == "__main__":
