@@ -1,19 +1,16 @@
 # Imports
-import os
 from flask import Flask, send_file, request
-import datetime
-from typing import List
-import htmls
+import io, os, datetime, htmls, database
 
 # App
 app = Flask(__name__)
 
 # Globals
-all_entries = {}
+all_entries, sha = database.fromStorage()
 current = {}
 classes = {"Mr. Miller": "miller"}
 
-timezone = datetime.timezone(datetime.timedelta(hours=-6))
+timezone = database.timezone
 
 
 # Functions
@@ -50,7 +47,7 @@ def error():
     return htmls.mainPage.format(cards=allCards, searchJs=htmls.searchJs)
 
 
-@app.route("/<current_class>", methods=["POST", "GET", "PUT"])  #
+@app.route("/<current_class>", methods=["POST", "GET", "PUT"])  # Class Page
 def index(current_class):
     global current
 
@@ -90,6 +87,8 @@ def index(current_class):
                 "count": count,
                 "reason": reason,
                 "exit_time": exit_time,
+                "datetime": now,
+                "return_time": "Out",
             }
 
             return "success"
@@ -100,9 +99,13 @@ def index(current_class):
                 "reason": current[current_class]["reason"],
                 "return_time": datetime.datetime.now(timezone).strftime("%I:%M %p"),
                 "exit_time": current[current_class]["exit_time"],
+                "datetime": current[current_class]["datetime"],
             }
 
             all_entries[current_class].append(current[current_class])
+
+            database.toStorage(all_entries, sha)
+
             current[current_class] = {}
             return "success"
 
@@ -126,6 +129,7 @@ def index(current_class):
                 ),
                 notDisabled=(current[current_class] == {} and "disabled" or " "),
                 table=table,
+                class_url=current_class,
                 current_class=list(classes.keys())[
                     list(classes.values()).index(current_class)
                 ],
@@ -135,8 +139,75 @@ def index(current_class):
         return str(e)
 
 
+@app.route("/<current_class>/download", methods=["GET"])  # Download one class
+def download(current_class):
+    if current_class not in list(classes.values()):
+        return "Class does not exist"
+    if current_class not in all_entries:
+        all_entries[current_class] = []
+    if current_class not in current:
+        current[current_class] = {}
+
+    data = all_entries[current_class]
+    data.reverse()
+
+    # Convert to CSV in BytesIO
+    csv = "Name,Leave #,Reason,Date,Exit Time,Return Time\n"
+    for entry in data:
+        csv += f"\"{entry['name']}\",{entry['count']},{entry['reason']},{entry['exit_time']},{entry['return_time']}\n"
+
+    output = io.BytesIO()
+    output.write(csv.encode("utf-8"))
+    output.seek(0)
+
+    # Return the file as a downloadable response
+    return send_file(
+        output,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="FSMSDigitalHallpass-" + current_class + ".csv",
+    )
+
+
+@app.route("/download", methods=["GET"])  # Download all classes
+def downloadAll():
+    data = []
+    for class_name, entries in all_entries.items():
+        for entry in entries:
+            data.append(
+                {
+                    "name": entry["name"],
+                    "count": entry["count"],
+                    "reason": entry["reason"],
+                    "exit_time": entry["exit_time"],
+                    "return_time": entry.get("return_time", ""),
+                    "class": class_name,
+                    "datetime": entry["datetime"],
+                }
+            )
+    data = sorted(data, key=lambda x: x["datetime"])
+    data.reverse()
+
+    # Convert to CSV in BytesIO
+    csv = "Name,Leave #,Reason,Date,Exit Time,Return Time,Class\n"
+    for entry in data:
+        csv += f"\"{entry['name']}\",{entry['count']},{entry['reason']},{entry['exit_time']},{entry['return_time']},{entry['class']}\n"
+
+    output = io.BytesIO()
+    output.write(csv.encode("utf-8"))
+    output.seek(0)
+
+    # Return the file as a downloadable response
+    return send_file(
+        output,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="FSMSDigitalHallpass-allData.csv",
+    )
+
+
 def main():
-    app.run(port=int(os.environ.get("PORT", 80)))
+    app.run(port=int(os.environ.get("PORT", 80)), debug=True)
 
 
 if __name__ == "__main__":

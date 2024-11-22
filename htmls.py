@@ -75,7 +75,7 @@ nav = """
             <ul>
                 <li><strong>FSMS Digital Hallpass</strong></li>
                 <li>
-                   <input id="search" type="search" placeholder="Search"/>
+                   <input id="search" type="search" placeholder="Search teachers"/>
                 </li>
             </ul>
         </nav>
@@ -84,7 +84,8 @@ currentClassNav = """
         <nav style="margin-left: 20px;">
             <ul>
                 <li><strong><a href="/">FSMS Digital Hallpass</a></strong></li>
-                <li>Class: {current_class}</li>
+                <li>Teacher: {current_class}</li>
+                <li><a href="/{class_url}/download">Download Class Data</a></li>
             </ul>
         </nav>
 """
@@ -123,7 +124,7 @@ mainPage = (
         </script>
 </html>"""
 )
-card = '<article><strong>{teacher}</strong>\'s Class<br/><br/><a href="{url}">Here</a></article>'
+card = '<article><strong>{teacher}</strong>\'s Class<br/><br/><a href="{url}">Start Here</a></article>'
 html = (
     """<html data-theme="light"><head>"""
     + head
