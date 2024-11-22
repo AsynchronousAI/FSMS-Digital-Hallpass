@@ -111,7 +111,9 @@ def index(current_class):
 
         elif request.method == "GET":
             table = ""
-            for entry in reversed(all_entries[current_class]):
+            for entry in reversed(
+                sorted(all_entries[current_class], key=lambda x: x["datetime"])
+            ):
                 table += f"""<tr>
                     <td>{entry['name']}</td>
                     <td>#{entry['count']}</td>
@@ -149,7 +151,6 @@ def download(current_class):
         current[current_class] = {}
 
     data = all_entries[current_class]
-    data.reverse()
 
     # Convert to CSV in BytesIO
     csv = "Name,Leave #,Reason,Date,Exit Time,Return Time\n"
@@ -186,7 +187,6 @@ def downloadAll():
                 }
             )
     data = sorted(data, key=lambda x: x["datetime"])
-    data.reverse()
 
     # Convert to CSV in BytesIO
     csv = "Name,Leave #,Reason,Date,Exit Time,Return Time,Class\n"
