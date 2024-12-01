@@ -1,2 +1,2 @@
 # FSMS Digital Hallpass
-https://fsms-digital-hallpass.onrender.com/
+https://fsms-digital-hallpass-omrf.onrender.com/
